@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rescue Ops: Wildfire | Command OS v18.3 (OFFLINE)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { 50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c', 800: '#9a3412', 900: '#7c2d12' },
+                        slate: { 850: '#111827', 900: '#0f172a', 950: '#020617' }
+                    },
+                    fontFamily: {
+                        sans: ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+                        mono: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { background-color: #020617; color: #e2e8f0; overflow: hidden; height: 100vh; }
+        
+        /* Offline Texture Generation */
+        .bg-noise {
+            background-color: #020617;
+            background-image: radial-gradient(at 0% 0%, rgba(249, 115, 22, 0.05) 0px, transparent 50%),
+                              radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.05) 0px, transparent 50%);
+        }
+
+        /* Unified Card System */
+        .theme-card { background: #0f172a; border-radius: 12px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); transition: transform 0.2s, border-color 0.2s; }
+        .theme-card:hover { border-color: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+        .theme-header { padding: 12px 20px; font-weight: 900; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.05em; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .theme-body { padding: 20px; }
+
+        /* Color Themes */
+        .card-brand { border-color: #f97316; } .card-brand .theme-header { background: rgba(249, 115, 22, 0.1); color: #f97316; border-bottom-color: rgba(249, 115, 22, 0.2); }
+        .card-red { border-color: #ef4444; } .card-red .theme-header { background: rgba(239, 68, 68, 0.1); color: #ef4444; border-bottom-color: rgba(239, 68, 68, 0.2); }
+        .card-blue { border-color: #3b82f6; } .card-blue .theme-header { background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-bottom-color: rgba(59, 130, 246, 0.2); }
+        .card-purple { border-color: #a855f7; } .card-purple .theme-header { background: rgba(168, 85, 247, 0.1); color: #a855f7; border-bottom-color: rgba(168, 85, 247, 0.2); }
+        .card-green { border-color: #22c55e; } .card-green .theme-header { background: rgba(34, 197, 94, 0.1); color: #22c55e; border-bottom-color: rgba(34, 197, 94, 0.2); }
+        .card-slate { border-color: #475569; } .card-slate .theme-header { background: rgba(71, 85, 105, 0.1); color: #94a3b8; border-bottom-color: rgba(71, 85, 105, 0.2); }
+        
+        /* Navigation */
+        .nav-btn { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); border-left: 3px solid transparent; }
+        .nav-btn:hover { background: rgba(255, 255, 255, 0.05); padding-left: 1.5rem; }
+        .nav-btn.active { background: linear-gradient(90deg, rgba(249, 115, 22, 0.15), transparent); border-left-color: #f97316; color: white; padding-left: 1.25rem; }
+
+        /* Utilities */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.5); }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; border: 1px solid #0f172a; }
+        input[type="range"] { accent-color: #f97316; }
+        .btn-tier { border: 1px solid #334155; background: #1e293b; color: #94a3b8; font-weight: 800; font-size: 10px; border-radius: 6px; transition: all 0.15s; }
+        .btn-tier:hover { background: #334155; color: white; }
+        .btn-tier.active { background: #f97316; color: white; border-color: #f97316; box-shadow: 0 0 10px rgba(249, 115, 22, 0.3); }
+        
+        /* Message Box & Animations */
+        #customMsg { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); transform: translateY(100%); opacity: 0; }
+        #customMsg.show { transform: translateY(0); opacity: 1; }
+        .scanline { width: 100%; height: 2px; background: rgba(255,255,255,0.1); position: absolute; animation: scan 6s linear infinite; pointer-events: none; z-index: 50; }
+        @keyframes scan { 0% { top: 0%; opacity: 0; } 50% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
+
+        /* Constitution Styling */
+        .constitution-section { border-left: 3px solid rgba(249, 115, 22, 0.5); padding-left: 1.5rem; margin-bottom: 3rem; }
+    </style>
+</head>
+<body class="selection:bg-brand-500 selection:text-white bg-noise">
+
+    <div class="scanline"></div>
+
+    <!-- LOGIN -->
+    <div id="portalView" class="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6 bg-noise">
+        <div class="w-full max-w-md space-y-8 relative z-10 text-center animate-in zoom-in-95 duration-500">
+            <!-- Offline Logo Fallback -->
+            <div id="loginLogoContainer" class="w-24 h-24 mx-auto rounded-2xl shadow-2xl shadow-brand-500/20 mb-4 border-2 border-white/10 bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center overflow-hidden">
+                <img src="logo.jpg" alt="RO" class="w-full h-full object-cover" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
+                <span class="hidden text-3xl font-black text-brand-500 italic">RO</span>
+            </div>
+            
+            <h1 class="text-5xl font-black text-white tracking-tighter uppercase italic drop-shadow-lg">Rescue Ops</h1>
+            <p class="text-xs font-mono text-brand-500 uppercase tracking-[0.4em] font-bold">Offline Command v18.3</p>
+            
+            <div class="bg-[#0f172a] p-8 rounded-[2rem] shadow-2xl border border-slate-800 text-left relative">
+                <div class="space-y-6">
+                    <div>
+                        <label data-en="Staff Identity" data-fr="Identité du Staff" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Staff Identity</label>
+                        <input type="text" id="loginName" placeholder="Create Local Profile..." class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-4 text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all placeholder:text-slate-600 font-mono text-sm">
+                    </div>
+                    <div>
+                        <label data-en="Assigned Rank" data-fr="Rang Assigné" class="block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1">Assigned Rank</label>
+                        <div class="relative">
+                            <select id="loginRank" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-4 py-4 text-white appearance-none outline-none cursor-pointer focus:ring-2 focus:ring-brand-500 transition-all font-mono text-sm">
+                                <option value="Trial Moderator">Trial Moderator</option>
+                                <option value="Moderator">Moderator</option>
+                                <option value="Head Moderator">Head Moderator</option>
+                                <option value="Staff Manager">Staff Manager</option>
+                                <option value="Community Manager">Community Manager</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button onclick="attemptLogin()" data-en="Initialize Local Session" data-fr="Initialiser Session Locale" class="w-full py-4 bg-gradient-to-r from-brand-600 to-brand-500 hover:from-brand-500 hover:to-brand-400 text-white font-black rounded-xl transition-all uppercase tracking-widest shadow-lg shadow-brand-500/20 hover:scale-[1.02]">Initialize Local Session</button>
+                </div>
+            </div>
+            <p data-en="DATA PERSISTENCE: LOCAL STORAGE ACTIVE" data-fr="PERSISTANCE DES DONNÉES : STOCKAGE LOCAL ACTIF" class="text-[9px] text-slate-600 font-mono mt-4">DATA PERSISTENCE: LOCAL STORAGE ACTIVE</p>
+        </div>
+    </div>
+
+    <!-- MAIN UI -->
+    <div id="mainView" class="hidden flex h-full bg-noise">
+        <!-- SIDEBAR -->
+        <aside class="w-80 bg-[#050b14] border-r border-white/5 flex flex-col z-50 shadow-2xl relative">
+            <div class="p-6 relative z-10">
+                <div class="flex items-center gap-4 mb-10">
+                    <div class="w-12 h-12 rounded-xl shadow-lg border border-white/10 bg-gradient-to-br from-brand-600 to-brand-800 flex items-center justify-center overflow-hidden">
+                        <img src="logo.jpg" class="w-full h-full object-cover" onerror="this.style.display='none'; this.parentElement.innerHTML='<span class=\'text-lg font-black text-white italic\'>W</span>'">
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-white leading-none uppercase tracking-tight">Rescue Ops: Wildfire</h2>
+                        <span data-en="Local Terminal" data-fr="Terminal Local" class="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Local Terminal</span>
+                    </div>
+                </div>
+
+                <div class="flex p-1 bg-slate-900 rounded-xl border border-slate-800 mb-8">
+                    <button id="langEN" onclick="setLang('en')" class="flex-1 py-2 text-[10px] font-black rounded-lg transition-all bg-brand-600 text-white shadow-lg">ENGLISH</button>
+                    <button id="langFR" onclick="setLang('fr')" class="flex-1 py-2 text-[10px] font-black rounded-lg transition-all text-slate-500 hover:text-white">FRANÇAIS</button>
+                </div>
+
+                <div class="p-5 bg-gradient-to-br from-slate-900 to-slate-950 rounded-2xl border border-slate-800 mb-8 shadow-inner">
+                    <div class="flex items-center gap-4 overflow-hidden">
+                        <div class="w-12 h-12 rounded-xl bg-slate-800 flex items-center justify-center text-brand-500 font-black text-xl shadow-lg border border-slate-700" id="userInitial">?</div>
+                        <div class="min-w-0">
+                            <p data-en="Operator" data-fr="Opérateur" class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-0.5">Operator</p>
+                            <p id="userNameDisplay" class="text-sm font-bold text-white truncate">User</p>
+                            <div class="mt-1 inline-flex px-2 py-0.5 rounded bg-brand-500/10 border border-brand-500/20 text-[9px] font-bold text-brand-500 uppercase truncate" id="userRankDisplay">Rank</div>
+                        </div>
+                    </div>
+                </div>
+
+                <nav class="space-y-2" id="navContainer"></nav>
+            </div>
+            <div class="mt-auto p-6 relative z-10 space-y-2">
+                <button onclick="clearLocalData()" data-en="Hard Reset Data" data-fr="Réinitialisation Totale" class="w-full py-2 bg-slate-900 hover:bg-slate-800 text-slate-500 text-[9px] font-bold rounded uppercase border border-slate-800 transition-colors">
+                    Hard Reset Data
+                </button>
+                <button onclick="logout()" data-en="Terminate Session" data-fr="Terminer Session" class="w-full py-3 bg-slate-900 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/50 text-slate-500 font-bold rounded-xl text-xs transition-all border border-slate-800 uppercase tracking-widest flex items-center justify-center gap-2">
+                    Terminate Session
+                </button>
+            </div>
+        </aside>
+
+        <!-- CONTENT -->
+        <main class="flex-1 flex flex-col min-w-0 bg-noise relative overflow-hidden">
+            <header class="h-20 border-b border-white/5 flex items-center justify-between px-10 bg-[#020617]/90 backdrop-blur-xl sticky top-0 z-40 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <h2 id="pageTitle" class="text-2xl font-black text-white tracking-tight uppercase italic drop-shadow-md">Dashboard</h2>
+                </div>
+                <div class="flex items-center gap-8 font-mono text-[11px] font-bold text-slate-500 bg-slate-900/50 px-6 py-2 rounded-full border border-white/5">
+                    <div class="flex flex-col items-end">
+                        <span data-en="Paris MRS" data-fr="Paris MRS" class="text-[9px] text-brand-500 uppercase tracking-wider mb-0.5">Paris MRS</span>
+                        <span id="clockMRS" class="text-white">--:--:--</span>
+                    </div>
+                    <div class="w-px h-6 bg-white/10"></div>
+                    <div class="flex flex-col items-start">
+                        <span data-en="Global UTC" data-fr="UTC Global" class="text-[9px] text-slate-400 uppercase tracking-wider mb-0.5">Global UTC</span>
+                        <span id="clockUTC" class="text-white">--:--:--</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar relative p-10">
+                
+                <!-- VIEW: DASHBOARD -->
+                <div id="view-dash" class="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+                    <!-- OFFLINE HERO BANNER -->
+                    <div class="relative w-full h-64 rounded-[2rem] overflow-hidden border border-slate-800 shadow-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 group">
+                        <!-- Local Image or Fallback Gradient -->
+                        <img src="19201080_RescueOpsWildfire_KeyArt_V2.jpg" class="w-full h-full object-cover transition-transform duration-[20s] group-hover:scale-110 opacity-80 mix-blend-overlay" onerror="this.style.display='none'">
+                        
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#020617] via-transparent to-transparent z-10"></div>
+                        <div class="absolute bottom-8 left-8 z-20">
+                            <div class="inline-flex items-center gap-2 bg-green-500/10 text-green-500 px-3 py-1 rounded-full border border-green-500/20 text-[10px] font-black uppercase tracking-widest mb-3">
+                                <span class="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span> <span data-en="Offline Mode Active" data-fr="Mode Hors-ligne Actif">Offline Mode Active</span>
+                            </div>
+                            <h2 class="text-4xl font-black text-white uppercase italic tracking-tighter drop-shadow-lg">Wildfire Command</h2>
+                            <p data-en="Local Operations Dashboard" data-fr="Tableau de Bord Opérationnel Local" class="text-slate-400 font-bold uppercase tracking-widest text-xs mt-2">Local Operations Dashboard</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="statGrid"></div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        <div class="lg:col-span-2 theme-card card-brand">
+                            <div class="theme-header">
+                                <div class="w-2 h-2 bg-current rounded-full animate-pulse"></div>
+                                <span id="opUpdateTitle">Operational Updates</span>
+                            </div>
+                            <div id="opUpdateList" class="theme-body space-y-4"></div>
+                        </div>
+                        <div class="theme-card card-slate">
+                            <div class="theme-header">
+                                <span id="staffMsgTitle">System Protocol</span>
+                            </div>
+                            <div id="systemLog" class="theme-body space-y-4 text-xs text-slate-400"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="theme-card card-slate">
+                        <div class="theme-header">
+                            <span id="recentActTitle">Recent Activity Journal (Local)</span>
+                        </div>
+                        <div id="activityFeed" class="theme-body space-y-3 max-h-[300px] overflow-y-auto custom-scrollbar pr-2"></div>
+                    </div>
+                </div>
+
+                <!-- VIEW: CONSTITUTION -->
+                <div id="view-constitution" class="hidden animate-in zoom-in-95 duration-500 max-w-6xl mx-auto">
+                    <div class="theme-card card-brand p-0">
+                        <div class="theme-header text-lg" data-en="Master Constitution & Penal Code" data-fr="Constitution Maître & Code Pénal">Master Constitution & Penal Code</div>
+                        <div class="theme-body">
+                            <div id="constitutionContent" class="space-y-16 text-slate-300 leading-loose text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: MATRIX -->
+                <div id="view-matrix" class="hidden flex flex-col lg:flex-row gap-10 animate-in slide-in-from-right-8 duration-500">
+                    <div class="flex-1 space-y-8">
+                        <div class="bg-[#0f172a] p-4 rounded-xl border border-slate-700 sticky top-0 z-20 shadow-xl">
+                            <input type="text" id="matrixSearch" oninput="renderMatrix()" placeholder="Filter rules by Article name or ID..." class="w-full bg-slate-900 border border-slate-800 rounded-lg py-3 px-6 text-sm text-white focus:ring-2 focus:ring-brand-500 outline-none transition-all placeholder:text-slate-600 font-mono">
+                        </div>
+                        <div id="matrixList" class="space-y-8 pb-20"></div>
+                    </div>
+                    
+                    <!-- INCIDENT BUILDER PANEL -->
+                    <div class="w-full lg:w-[450px] theme-card card-brand h-fit sticky top-8 shadow-2xl">
+                        <div class="theme-header justify-between">
+                            <span id="builderTitle">Incident Builder</span>
+                            <button onclick="resetIncBuilder()" class="text-[10px] font-bold opacity-60 hover:opacity-100 uppercase transition-opacity">Clear</button>
+                        </div>
+                        <div class="theme-body space-y-5">
+                            <div>
+                                <label data-en="Discord Username" data-fr="Nom d'Utilisateur Discord" class="text-[10px] font-bold text-slate-500 uppercase mb-2 block ml-1">Discord Username</label>
+                                <input id="incUsername" type="text" placeholder="Username (e.g. User#1234)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs text-white focus:border-brand-500 outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label data-en="Discord ID" data-fr="ID Discord" class="text-[10px] font-bold text-slate-500 uppercase mb-2 block ml-1">Discord ID</label>
+                                <input id="incDiscordId" type="text" placeholder="ID (e.g. 847382...)" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs text-white focus:border-brand-500 outline-none transition-colors">
+                            </div>
+                            
+                            <div>
+                                <label data-en="Context & Evidence" data-fr="Contexte & Preuves" class="text-[10px] font-bold text-slate-500 uppercase mb-2 block ml-1">Context & Evidence</label>
+                                <textarea id="incDesc" placeholder="Paste message links or describe the situation..." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 text-xs text-white h-32 resize-none focus:border-brand-500 outline-none transition-colors"></textarea>
+                            </div>
+                            
+                            <div class="p-6 bg-slate-950 border border-slate-800 rounded-xl shadow-inner">
+                                <p id="calcActionLabel" class="text-[10px] font-bold text-slate-500 uppercase mb-2 tracking-widest">Calculated Consequence</p>
+                                <div id="incAction" class="text-2xl font-black text-white leading-tight mb-4">No Action</div>
+                                <div id="selectedRulesList" class="text-[11px] text-slate-400 space-y-2 border-t border-slate-800 pt-4 max-h-32 overflow-y-auto custom-scrollbar"></div>
+                            </div>
+                            <button onclick="generateLog()" id="btnGenerate" class="w-full py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-black text-sm transition-all uppercase tracking-widest shadow-lg shadow-brand-600/20">Generate Export Pack</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- VIEW: TOOLBOX -->
+                <div id="view-toolbox" class="hidden space-y-12 animate-in fade-in duration-700">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="templateGrid"></div>
+                </div>
+
+                <!-- VIEW: CHAIN -->
+                <div id="view-chain" class="hidden animate-in slide-in-from-bottom-8 duration-700 p-8">
+                    <div class="max-w-3xl mx-auto space-y-6" id="chainList"></div>
+                </div>
+
+                <!-- VIEW: SECURITY -->
+                <div id="view-security" class="hidden animate-in zoom-in-95 duration-500">
+                    <div class="max-w-4xl mx-auto theme-card card-red">
+                        <div class="theme-header text-lg justify-center" data-en="Strict NDA Protocol" data-fr="Protocole NDA Strict">Strict NDA Protocol</div>
+                        <div class="theme-body text-center">
+                            <div class="prose prose-invert prose-lg text-slate-300 mx-auto space-y-8">
+                                <p data-en="Unauthorized leaking of internal documents will result in immediate termination and blacklisting." data-fr="La fuite non autorisée de documents internes entraînera un licenciement immédiat et une mise sur liste noire." class="font-bold text-red-400">Unauthorized leaking of internal documents will result in immediate termination and blacklisting.</p>
+                                <p data-en="This terminal utilizes AES-256 local encryption for incident data storage. No data leaves this session environment." data-fr="Ce terminal utilise un cryptage local AES-256 pour le stockage des données d'incident. Aucune donnée ne quitte cet environnement de session.">This terminal utilizes AES-256 local encryption for incident data storage. No data leaves this session environment.</p>
+                                <button data-en="I Understand & Comply" data-fr="Je Comprends & J'accepte" class="px-10 py-4 bg-red-600 hover:bg-red-500 text-white rounded-xl text-sm font-black uppercase tracking-widest transition-all shadow-lg">I Understand & Comply</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- RULE INFO MODAL -->
+    <div id="ruleModal" class="hidden fixed inset-0 z-[120] flex items-center justify-center p-6 bg-black/80 backdrop-blur-lg">
+        <div class="bg-[#0f172a] border border-slate-700 p-0 rounded-[2rem] w-full max-w-2xl shadow-2xl relative overflow-hidden">
+            <div class="theme-header justify-between bg-slate-900 border-b border-slate-800 p-6">
+                <span data-en="Protocol Details" data-fr="Détails du Protocole">Protocol Details</span>
+                <button onclick="closeRuleModal()" class="text-slate-500 hover:text-white">✕</button>
+            </div>
+            <div id="modalContent" class="p-8"></div>
+        </div>
+    </div>
+
+    <!-- LOG MODAL -->
+    <div id="logModal" class="hidden fixed inset-0 z-[110] bg-black/90 flex items-center justify-center p-6 backdrop-blur-xl">
+        <div class="theme-card card-brand w-full max-w-3xl shadow-2xl">
+            <div class="theme-header justify-between">
+                <span data-en="Incident Export Pack" data-fr="Pack Export Incident">Incident Export Pack</span>
+                <button onclick="document.getElementById('logModal').classList.add('hidden')" class="text-slate-500 hover:text-white">✕</button>
+            </div>
+            <div class="theme-body">
+                <textarea id="logOutput" class="w-full h-80 bg-slate-950 border border-slate-800 rounded-xl p-6 text-xs font-mono text-slate-300 mb-6 resize-none outline-none focus:border-brand-500 transition-colors custom-scrollbar leading-relaxed" readonly></textarea>
+                <div class="flex gap-4">
+                    <button onclick="copyToClipboard(document.getElementById('logOutput').value)" id="btnCopy" class="flex-1 py-4 bg-brand-600 hover:bg-brand-500 text-white rounded-xl font-black text-xs uppercase tracking-widest">Copy to Clipboard</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="customMsg" class="fixed bottom-10 right-10 z-[130] bg-[#0f172a] border border-brand-500 px-8 py-5 rounded-xl shadow-2xl flex items-center gap-5 pointer-events-none opacity-0 translate-y-10 transition-all duration-500">
+        <div class="w-3 h-3 rounded-full bg-brand-500 shadow-[0_0_15px_rgba(249,115,22,0.8)]"></div>
+        <p id="msgText" class="text-sm font-bold text-white tracking-wide"></p>
+    </div>
+
+    <script>
+        // --- OFFLINE PERSISTENCE ENGINE ---
+        const DB_KEY = "rescue_ops_v18_data";
+        
+        // --- INTEGRATED MOD TOOLBOX DATA (Bilingual) ---
+        const modToolboxData = [
+          {
+            category: { en: "Category A: Civility & Conduct (Zero Tolerance)", fr: "Catégorie A : Civilité & Conduite (Tolérance Zéro)" },
+            items: [
+              {
+                title: { en: "Hate Speech / Slurs", fr: "Discours Haineux / Insultes" },
+                action: { en: "Permanent Ban", fr: "Bannissement Définitif" },
+                template: { 
+                    en: "Violation: Hate Speech/Slurs. Action: Permanent Ban. Note: This server maintains a zero-tolerance policy regardless of intent or context (including \"reclaimed\" or censored slurs).",
+                    fr: "Violation : Discours Haineux/Insultes. Action : Bannissement Définitif. Note : Ce serveur maintient une politique de tolérance zéro, quel que soit l'intention ou le contexte (y compris les insultes \"réappropriées\" ou censurées)."
+                }
+              },
+              {
+                title: { en: "Harassment / Bullying", fr: "Harcèlement / Intimidation" },
+                action: { en: "Permanent Ban", fr: "Bannissement Définitif" },
+                template: {
+                    en: "Violation: Harassment & Bullying. Action: Permanent Ban. Note: Targeted attacks or encouraging self-harm are strictly forbidden to ensure a safe community.",
+                    fr: "Violation : Harcèlement & Intimidation. Action : Bannissement Définitif. Note : Les attaques ciblées ou l'encouragement à l'automutilation sont strictement interdits."
+                }
+              },
+              {
+                title: { en: "Doxing (Privacy Breach)", fr: "Doxing (Atteinte à la Vie Privée)" },
+                action: { en: "Permanent Ban + Report", fr: "Ban Définitif + Signalement" },
+                template: {
+                    en: "Violation: Doxing/Privacy Breach. Action: Permanent Ban + Reported to Discord Trust & Safety. Note: Sharing real-world information without consent is illegal and strictly prohibited.",
+                    fr: "Violation : Doxing/Atteinte à la Vie Privée. Action : Bannissement Définitif + Signalement à Discord. Note : Partager des informations réelles sans consentement est illégal."
+                }
+              },
+              {
+                title: { en: "Malicious Threats", fr: "Menaces Malveillantes" },
+                action: { en: "Permanent Ban", fr: "Bannissement Définitif" },
+                template: {
+                    en: "Violation: Malicious Threats. Action: Permanent Ban. Note: Threats of DDOS, swatting, or physical violence are treated as credible dangers to the community.",
+                    fr: "Violation : Menaces Malveillantes. Action : Bannissement Définitif. Note : Les menaces de DDOS, swatting ou violence physique sont traitées comme des dangers crédibles."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category B: Text Chat Discipline", fr: "Catégorie B : Discipline Chat Textuel" },
+            items: [
+              {
+                title: { en: "Spam & Disruption (1st Offense)", fr: "Spam & Perturbation (1ère Offense)" },
+                action: { en: "Verbal Warning", fr: "Avertissement Verbal" },
+                template: {
+                    en: "Please refrain from sending repeated messages or walls of text. This disrupts the flow of conversation for others. Consider this a verbal warning.",
+                    fr: "Merci d'éviter d'envoyer des messages répétés ou des blocs de texte. Cela perturbe la conversation. Considérez ceci comme un avertissement verbal."
+                }
+              },
+              {
+                title: { en: "Spam & Disruption (2nd Offense)", fr: "Spam & Perturbation (2ème Offense)" },
+                action: { en: "1-Hour Mute", fr: "Mute 1 Heure" },
+                template: {
+                    en: "You were previously warned regarding spam/disruption. You have been muted for 1 hour.",
+                    fr: "Vous avez déjà été averti concernant le spam/perturbation. Vous avez été rendu muet pour 1 heure."
+                }
+              },
+              {
+                title: { en: "Language & Formatting (Caps/Ghost Ping)", fr: "Langage & Formatage (Majuscules/Ping Fantôme)" },
+                action: { en: "Verbal Warning", fr: "Avertissement Verbal" },
+                template: {
+                    en: "Please ensure all public communication is in English and avoid excessive use of Caps Lock. Consider this a verbal warning.",
+                    fr: "Veuillez éviter l'utilisation excessive des majuscules. Considérez ceci comme un avertissement verbal."
+                }
+              },
+              {
+                title: { en: "Topic Relevance (Wrong Channel)", fr: "Pertinence du Sujet (Mauvais Canal)" },
+                action: { en: "Warning & Redirection", fr: "Avertissement & Redirection" },
+                template: {
+                    en: "This channel is reserved for specific purposes. Please move your general chatter to the appropriate channel to keep things organized.",
+                    fr: "Ce canal est réservé à des usages spécifiques. Veuillez déplacer votre discussion générale vers le canal approprié."
+                }
+              },
+              {
+                title: { en: "Begging & Solicitation", fr: "Mendicité & Sollicitation" },
+                action: { en: "Verbal Warning", fr: "Avertissement Verbal" },
+                template: {
+                    en: "Soliciting Nitro, money, or game items is not permitted here. Please stop.",
+                    fr: "La sollicitation de Nitro, d'argent ou d'objets de jeu n'est pas permise ici. Veuillez arrêter."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category C: Media & Content Safety", fr: "Catégorie C : Sécurité Médias & Contenu" },
+            items: [
+              {
+                title: { en: "NSFW/NSFL Material", fr: "Matériel NSFW/NSFL" },
+                action: { en: "Immediate Permanent Ban", fr: "Bannissement Définitif Immédiat" },
+                template: {
+                    en: "Violation: Posting Pornography/Gore. Action: Immediate Permanent Ban. Note: This server is strictly Safe-For-Work (SFW).",
+                    fr: "Violation : Publication Pornographie/Gore. Action : Bannissement Définitif Immédiat. Note : Ce serveur est strictement Safe-For-Work (SFW)."
+                }
+              },
+              {
+                title: { en: "Malicious Files", fr: "Fichiers Malveillants" },
+                action: { en: "Immediate Permanent Ban", fr: "Bannissement Définitif Immédiat" },
+                template: {
+                    en: "Violation: Distribution of Malicious Files (Viruses/Crash Videos). Action: Immediate Permanent Ban.",
+                    fr: "Violation : Distribution de Fichiers Malveillants (Virus/Vidéos Crash). Action : Bannissement Définitif Immédiat."
+                }
+              },
+              {
+                title: { en: "Seizure Safety (Flashing Images)", fr: "Sécurité Épilepsie (Images Clignotantes)" },
+                action: { en: "Content Removal & Warning", fr: "Suppression & Avertissement" },
+                template: {
+                    en: "Your post contained flashing/strobing imagery which is a hazard to members with photosensitive epilepsy. The content has been removed. Please consider this a warning.",
+                    fr: "Votre message contenait des images clignotantes dangereuses pour les épileptiques photosensibles. Le contenu a été supprimé. Considérez ceci comme un avertissement."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category D: Voice Channel Etiquette", fr: "Catégorie D : Étiquette Salon Vocal" },
+            items: [
+              {
+                title: { en: "Audio Quality (Ear-rape)", fr: "Qualité Audio (Saturation)" },
+                action: { en: "1-Hour Mute", fr: "Mute 1 Heure" },
+                template: {
+                    en: "Intentionally disrupting the Voice Channel with loud/distorted audio is prohibited. Action: 1-Hour Server Mute.",
+                    fr: "Perturber intentionnellement le Salon Vocal avec un son fort/distordu est interdit. Action : Mute Serveur 1 Heure."
+                }
+              },
+              {
+                title: { en: "Recording Without Consent", fr: "Enregistrement Sans Consentement" },
+                action: { en: "Permanent Ban", fr: "Bannissement Définitif" },
+                template: {
+                    en: "Violation: Recording/Streaming VC without verbal consent from ALL present users. Action: Immediate Permanent Ban.",
+                    fr: "Violation : Enregistrement/Stream du Vocal sans consentement verbal de TOUS les utilisateurs présents. Action : Bannissement Définitif Immédiat."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category E: User Identity", fr: "Catégorie E : Identité Utilisateur" },
+            items: [
+              {
+                title: { en: "Inappropriate Profile", fr: "Profil Inapproprié" },
+                action: { en: "Warning/Change Request", fr: "Avertissement/Demande de Changement" },
+                template: {
+                    en: "Your avatar/banner/bio contains content that violates our rules (NSFW/Hate Symbols). Please change it immediately, or action will be taken.",
+                    fr: "Votre avatar/bannière/bio contient du contenu violant nos règles (NSFW/Symboles Haineux). Veuillez le changer immédiatement, sinon des mesures seront prises."
+                }
+              },
+              {
+                title: { en: "Impersonation", fr: "Usurpation d'Identité" },
+                action: { en: "Permanent Ban", fr: "Bannissement Définitif" },
+                template: {
+                    en: "Violation: Impersonating Staff/Public Figures. Action: Permanent Ban.",
+                    fr: "Violation : Usurpation d'identité Staff/Figures Publiques. Action : Bannissement Définitif."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category F: Commerce & Advertising", fr: "Catégorie F : Commerce & Publicité" },
+            items: [
+              {
+                title: { en: "DM Advertising", fr: "Publicité par MP" },
+                action: { en: "Permanent Ban", fr: "Bannissement Définitif" },
+                template: {
+                    en: "Violation: Unsolicited DM Advertising using the member list. Action: Immediate Permanent Ban.",
+                    fr: "Violation : Publicité MP non sollicitée utilisant la liste des membres. Action : Bannissement Définitif Immédiat."
+                }
+              },
+              {
+                title: { en: "Server Invites (Poaching)", fr: "Invitations Serveur (Recrutement)" },
+                action: { en: "Warning & Deletion", fr: "Avertissement & Suppression" },
+                template: {
+                    en: "Posting invite links to other Discord communities is not allowed. The link has been deleted. Consider this a warning.",
+                    fr: "Poster des liens d'invitation vers d'autres communautés Discord n'est pas autorisé. Le lien a été supprimé. Considérez ceci comme un avertissement."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category G: Administrative Respect", fr: "Catégorie G : Respect Administratif" },
+            items: [
+              {
+                title: { en: "Mini-Modding", fr: "Mini-Modération" },
+                action: { en: "Verbal Warning", fr: "Avertissement Verbal" },
+                template: {
+                    en: "Thank you for the concern, but please leave rule enforcement to the staff team. Use the report function if you see a violation.",
+                    fr: "Merci de votre préoccupation, mais veuillez laisser l'application des règles à l'équipe. Utilisez la fonction de signalement si vous voyez une violation."
+                }
+              },
+              {
+                title: { en: "Arguing with Staff", fr: "Argumenter avec le Staff" },
+                action: { en: "Warning/Mute", fr: "Avertissement/Mute" },
+                template: {
+                    en: "Staff decisions are final. If you wish to discuss this punishment, please open a ticket. Arguing in public chat will result in a mute.",
+                    fr: "Les décisions du staff sont finales. Si vous souhaitez discuter de cette sanction, ouvrez un ticket. Argumenter dans le chat public entraînera un mute."
+                }
+              },
+              {
+                title: { en: "The \"Schrodinger’s Joke\" Defense", fr: "Défense \"C'était pour rire\"" },
+                action: { en: "Denial of Excuse", fr: "Refus de l'Excuse" },
+                template: {
+                    en: "Hiding behind 'it's just a joke' does not excuse toxicity or rule violations. We judge the content of the message, not the alleged intent. This will be treated as a standard violation.",
+                    fr: "Se cacher derrière 'c'est juste une blague' n'excuse pas la toxicité. Nous jugeons le contenu du message, pas l'intention présumée. Ceci sera traité comme une violation standard."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category H: Ticket Operations", fr: "Catégorie H : Opérations Ticket" },
+            items: [
+              {
+                title: { en: "Standard Greeting", fr: "Salutation Standard" },
+                template: {
+                    en: "Hello! Thank you for contacting Rescue Ops: Wildfire support. How can we assist you today? Please provide as much detail as possible so we can help you efficiently.",
+                    fr: "Bonjour ! Merci de contacter le support Rescue Ops: Wildfire. Comment pouvons-nous vous aider aujourd'hui ? Veuillez fournir autant de détails que possible."
+                }
+              },
+              {
+                title: { en: "Requesting Evidence", fr: "Demande de Preuves" },
+                template: {
+                    en: "To proceed with this investigation, we require valid evidence. Please provide screenshots, message links, or user IDs related to the incident. Note that we cannot accept edited images.",
+                    fr: "Pour poursuivre cette enquête, nous avons besoin de preuves valides. Veuillez fournir des captures d'écran, liens ou IDs. Notez que nous n'acceptons pas les images modifiées."
+                }
+              },
+              {
+                title: { en: "Closing Ticket (Resolved)", fr: "Fermeture Ticket (Résolu)" },
+                template: {
+                    en: "We are glad we could resolve your issue. This ticket will now be closed. If you need further assistance in the future, please feel free to open a new ticket. Have a great day!",
+                    fr: "Nous sommes ravis d'avoir pu résoudre votre problème. Ce ticket va maintenant être fermé. Si vous avez besoin d'aide future, n'hésitez pas à ouvrir un nouveau ticket. Bonne journée !"
+                }
+              },
+              {
+                title: { en: "Closing Ticket (Ghosted/No Reply)", fr: "Fermeture Ticket (Sans Réponse)" },
+                template: {
+                    en: "As we have not received a response in 24 hours, we are closing this ticket to keep our system organized. If you still require assistance, please open a new ticket.",
+                    fr: "Comme nous n'avons pas reçu de réponse depuis 24h, nous fermons ce ticket pour garder notre système organisé. Si vous avez encore besoin d'aide, veuillez ouvrir un nouveau ticket."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category I: Escalation & Authority", fr: "Catégorie I : Escalade & Autorité" },
+            items: [
+              {
+                title: { en: "Escalating to Head of Mod", fr: "Escalade au Chef Modération" },
+                template: {
+                    en: "This situation requires review by a higher authority. I am escalating this ticket to the Head of Moderation/Staff Manager. Please wait patiently for their response.",
+                    fr: "Cette situation nécessite l'examen d'une autorité supérieure. J'escalade ce ticket au Chef de la Modération/Responsable Staff. Veuillez patienter pour leur réponse."
+                }
+              },
+              {
+                title: { en: "Escalating Developer Issue", fr: "Escalade Problème Développeur" },
+                template: {
+                    en: "This appears to be a technical/development issue. I will escalate this to the Staff Manager for review. Please note that Developers are not contacted directly for moderation matters.",
+                    fr: "Cela semble être un problème technique. J'escalade ceci au Responsable Staff. Notez que les Développeurs ne sont pas contactés directement pour la modération."
+                }
+              },
+              {
+                title: { en: "Recusal (Conflict of Interest)", fr: "Récusation (Conflit d'Intérêt)" },
+                template: {
+                    en: "To ensure a fair and unbiased process, I am stepping back from this ticket due to a conflict of interest. Another staff member will take over shortly.",
+                    fr: "Pour assurer un processus équitable, je me retire de ce ticket en raison d'un conflit d'intérêts. Un autre membre du staff prendra le relais sous peu."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category J: Appeals", fr: "Catégorie J : Appels" },
+            items: [
+              {
+                title: { en: "Appeal Acknowledgment", fr: "Accusé Réception Appel" },
+                template: {
+                    en: "We have received your appeal. Please note that appeals must be submitted within 72 hours of the punishment. We will review the evidence and provide a decision shortly.",
+                    fr: "Nous avons reçu votre appel. Notez que les appels doivent être soumis dans les 72 heures suivant la sanction. Nous examinerons les preuves et fournirons une décision sous peu."
+                }
+              },
+              {
+                title: { en: "Appeal Denied", fr: "Appel Refusé" },
+                template: {
+                    en: "After a thorough review of the violation and evidence, your appeal has been denied. The punishment stands due to a violation of server rules. This decision is final.",
+                    fr: "Après examen approfondi, votre appel a été refusé. La sanction est maintenue en raison d'une violation des règles du serveur. Cette décision est définitive."
+                }
+              },
+              {
+                title: { en: "Refusal to Argue", fr: "Refus d'Argumenter" },
+                template: {
+                    en: "We have explained the reason for the moderation action. Continually arguing or debating the punishment is disruptive. If there is no new evidence to present, we will close this ticket.",
+                    fr: "Nous avons expliqué la raison de l'action. Continuer d'argumenter est perturbateur. S'il n'y a pas de nouvelles preuves, nous fermerons ce ticket."
+                }
+              }
+            ]
+          },
+          {
+            category: { en: "Category K: Internal Logging", fr: "Catégorie K : Logs Internes" },
+            items: [
+              {
+                title: { en: "Standard Log Format", fr: "Format Log Standard" },
+                template: {
+                    en: "Action: [Ban/Kick/Mute]\nUser: [User ID/Name]\nReason: [Rule Violated]\nDuration: [Time]\nEvidence: [Link/Screenshot]",
+                    fr: "Action: [Ban/Kick/Mute]\nUtilisateur: [ID/Nom]\nRaison: [Règle Violée]\nDurée: [Temps]\nPreuve: [Lien/Capture]"
+                }
+              },
+              {
+                title: { en: "Emergency Escalation Log", fr: "Log Escalade Urgence" },
+                template: {
+                    en: "EMERGENCY ACTION\nAction: [Emergency Ban/Mute]\nUser: [User ID]\nReason: Immediate threat to server reputation/safety.\nNote: Chain of command bypassed due to urgency. Escalated to Staff Manager.",
+                    fr: "ACTION URGENCE\nAction: [Ban/Mute Urgence]\nUtilisateur: [ID]\nRaison: Menace immédiate.\nNote: Chaîne de commandement contournée par urgence. Escaladé au Responsable Staff."
+                }
+              }
+            ]
+          }
+        ];
+        
+        let currentLang = 'en';
+        let app = { 
+            user: "Guest", 
+            rank: "Trial Moderator", 
+            selectedViolations: [], 
+            history: [],
+            stats: { tickets: 0, actions: 0 }
+        };
+
+        // Load Data on Start
+        function loadLocalData() {
+            const saved = localStorage.getItem(DB_KEY);
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                app.user = parsed.user || "Guest";
+                app.rank = parsed.rank || "Trial Moderator";
+                app.history = parsed.history || [];
+                app.stats = parsed.stats || { tickets: 0, actions: 0 };
+                return true; // Data found
+            }
+            return false; // New user
+        }
+
+        function saveLocalData() {
+            const dataToSave = {
+                user: app.user,
+                rank: app.rank,
+                history: app.history,
+                stats: app.stats
+            };
+            localStorage.setItem(DB_KEY, JSON.stringify(dataToSave));
+        }
+
+        function clearLocalData() {
+            if(confirm("HARD RESET: This will wipe all local logs and settings. Continue?")) {
+                localStorage.removeItem(DB_KEY);
+                location.reload();
+            }
+        }
+
+        // Refactored Ranks for Localization
+        const RANKS = [
+            { n: {en: "DEVELOPERS", fr: "DÉVELOPPEURS"}, d: {en: "Exkee Game Studio Employees. NOT VOLUNTEER STAFF.", fr: "Employés Exkee Game Studio. PAS BÉNÉVOLES."}, c: {en: "NEVER CONTACT DIRECTLY unless they initiate contact first.", fr: "NE JAMAIS CONTACTER sauf s'ils initient le contact."}, class: "card-red", badge: {en: "STUDIO", fr: "STUDIO"} },
+            { n: {en: "Community Manager (CM)", fr: "Community Manager (CM)"}, d: {en: "Final Authority. Policy Maker. Studio Rep.", fr: "Autorité Finale. Responsable Politique. Rep Studio."}, c: {en: "CONTACT FOR: Absolute Emergencies only if SM is away.", fr: "CONTACTER POUR : Urgences Absolues si SM absent."}, class: "card-brand", badge: {en: "LEAD", fr: "LEAD"} },
+            { n: {en: "Staff Manager (SM)", fr: "Responsable Staff (SM)"}, d: {en: "Leader of Volunteers. Appeals. Promotions. Cross-language issues.", fr: "Chef des Bénévoles. Appels. Promotions. Problèmes inter-langues."}, c: {en: "CONTACT FOR: Appeals, Reporting Corruption, Severe Raids.", fr: "CONTACTER POUR : Appels, Signalement Corruption, Raids Sévères."}, class: "card-purple", badge: {en: "HR", fr: "RH"} },
+            { n: {en: "Head of Mod (HM)", fr: "Chef Modération (HM)"}, d: {en: "Leads Language Team (ENG/FR). Schedules. Leaves.", fr: "Gère l'équipe langue (ENG/FR). Plannings. Absences."}, c: {en: "CONTACT FOR: Scheduling, Escalations, Leaves of Absence.", fr: "CONTACTER POUR : Plannings, Escalades, Absences."}, class: "card-blue", badge: {en: "SHIFT LEAD", fr: "CHEF ÉQUIPE"} },
+            { n: {en: "Moderator (Mod)", fr: "Modérateur (Mod)"}, d: {en: "Daily Ops. Tickets. Enforcement. Guides Trial Mods.", fr: "Ops Quotidiennes. Tickets. Application Règles. Guide les Tests."}, c: {en: "CONTACT FOR: General Tickets, Rule Enforcement.", fr: "CONTACTER POUR : Tickets Généraux, Application Règles."}, class: "card-green", badge: {en: "CORE", fr: "CŒUR"} },
+            { n: {en: "Trial Moderator (TM)", fr: "Modérateur en Test (TM)"}, d: {en: "Observation. Learning. Basic Tasks. 2-Week Probation.", fr: "Observation. Apprentissage. Tâches de base. Probation 2 semaines."}, c: {en: "CONTACT FOR: Basic Assistance.", fr: "CONTACTER POUR : Assistance de base."}, class: "card-slate", badge: {en: "TRAINEE", fr: "STAGIAIRE"} }
+        ];
+
+        const UI_STRINGS = {
+            en: {
+                dash: "Dashboard", matrix: "Penal Matrix", toolbox: "Mod Toolbox", chain: "Hierarchy", security: "Security", constitution: "Constitution",
+                stat_tickets: "Active Queue", stat_actions: "Session Logs", stat_staff: "Auth Rank",
+                online: "Authorized", recent_act: "Activity Journal", sys_prot: "System Protocol",
+                calc_action: "Calculated Consequence", no_action: "No Action", builder: "Incident Builder", generate: "Generate Log",
+                copy: "Copy Template", appeals: "Appeals Portal", op_updates: "Operational Updates",
+                app_link: "https://docs.google.com/forms/d/e/1FAIpQLScJ_X_APPEAL_FORM",
+                ph_search: "Filter rules by Article name or ID...",
+                lang_en_label: "ENGLISH",
+                lang_fr_label: "FRENCH"
+            },
+            fr: {
+                dash: "Tableau de Bord", matrix: "Matrice Pénale", toolbox: "Boîte à Outils", chain: "Hiérarchie", security: "Sécurité", constitution: "Constitution",
+                stat_tickets: "File Active", stat_actions: "Logs Session", stat_staff: "Rang Auth",
+                online: "Autorisé", recent_act: "Journal d'Activité", sys_prot: "Protocole Système",
+                calc_action: "Conséquence Calculée", no_action: "Aucune Action", builder: "Générateur d'Incident", generate: "Générer le Log",
+                copy: "Copier le Modèle", appeals: "Portail des Appels", op_updates: "Mises à jour Opérationnelles",
+                app_link: "https://docs.google.com/forms/d/e/1FAIpQLScJ_X_APPEAL_FORM_FR",
+                ph_search: "Filtrer règles par Nom ou ID...",
+                lang_en_label: "ANGLAIS",
+                lang_fr_label: "FRANÇAIS"
+            }
+        };
+
+        // Refactored Penal Code. 
+        // Note: 'e' (enforcement) is now an array of objects {en: "Val", fr: "Val"} to maintain logic checks on English terms while displaying French.
+        const PENAL_CODE = [
+            { cat: {en: "Category A: Civility & Conduct", fr: "Catégorie A : Civilité & Conduite"}, class: "card-red", accent: "text-red-400", rules: [
+                { id: 1, n: {en: "Hate Speech & Slurs", fr: "Discours Haineux & Insultes"}, d: {en: "Promotion of violence or dehumanization.", fr: "Promotion de la violence ou déshumanisation."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Using slurs.", fr: "Utilisation d'insultes."}, full: {en: "The promotion of violence, dehumanization, or degradation based on race, gender, orientation, religion, or disability is strictly prohibited.", fr: "La promotion de la violence, de la déshumanisation ou de la dégradation fondée sur la race, le genre, l'orientation, la religion ou le handicap est strictement interdite."} },
+                { id: 2, n: {en: "Harassment", fr: "Harcèlement"}, d: {en: "Targeted attacks or witch-hunting.", fr: "Attaques ciblées ou chasse aux sorcières."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Stalking.", fr: "Harcèlement."}, full: {en: "We prohibit targeted attacks against any individual, including 'witch-hunting,' persistent unwanted tagging, or the encouragement of self-harm/suicide.", fr: "Nous interdisons les attaques ciblées contre tout individu, y compris la 'chasse aux sorcières', les tags indésirables persistants ou l'encouragement à l'automutilation/suicide."} },
+                { id: 3, n: {en: "Doxing", fr: "Doxing"}, d: {en: "Sharing private info without consent.", fr: "Partage d'infos privées sans consentement."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Leaking IP.", fr: "Fuite d'IP."}, full: {en: "Revealing a user’s real-world identity, residential address, private phone number, or personal photographs without their explicit consent.", fr: "Révéler l'identité réelle, l'adresse résidentielle, le numéro de téléphone privé ou les photos personnelles d'un utilisateur sans son consentement explicite."} },
+                { id: 4, n: {en: "Threats", fr: "Menaces"}, d: {en: "Physical violence or DDOS threats.", fr: "Violence physique ou menaces DDOS."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Threats.", fr: "Menaces."}, full: {en: "Any threat involving physical violence, DDOS attacks, 'swatting,' or blackmail is considered a criminal act in our jurisdiction.", fr: "Toute menace impliquant violence physique, attaques DDOS, 'swatting' ou chantage est considérée comme un acte criminel dans notre juridiction."} }
+            ]},
+            { cat: {en: "Category B: Text Chat Discipline", fr: "Catégorie B : Discipline Chat"}, class: "card-blue", accent: "text-blue-400", rules: [
+                { id: 5, n: {en: "Spam", fr: "Spam"}, d: {en: "Walls of text or flooding.", fr: "Murs de texte ou flood."}, e: [{en: "Warning", fr: "Avertissement"}, {en: "Mute", fr: "Mute"}, {en: "Kick", fr: "Kick"}], type: "chat", case: {en: "Spamming.", fr: "Spamming."}, full: {en: "Disrupting the flow of conversation through walls of text, copy-pastas, or 'Zalgo' glitch text is forbidden.", fr: "Perturber le flux de conversation par des murs de texte, des copié-collés ou du texte glitch 'Zalgo' est interdit."} },
+                { id: 6, n: {en: "Formatting", fr: "Formatage"}, d: {en: "Caps lock or ghost pinging.", fr: "Majuscules ou ghost ping."}, e: [{en: "Warning", fr: "Avertissement"}, {en: "Mute", fr: "Mute"}, {en: "Kick", fr: "Kick"}], type: "chat", case: {en: "Caps lock.", fr: "Majuscules."}, full: {en: "Excessive use of 'Caps Lock' is considered 'shouting' and is prohibited as it creates visual noise.", fr: "L'utilisation excessive du verrouillage majuscule est considérée comme un 'cri' et est interdite car elle crée du bruit visuel."} },
+                { id: 7, n: {en: "Begging", fr: "Mendicité"}, d: {en: "Asking for money/skins.", fr: "Demander argent/skins."}, e: [{en: "Warning", fr: "Avertissement"}, {en: "Mute", fr: "Mute"}, {en: "Kick", fr: "Kick"}], type: "chat", case: {en: "Begging.", fr: "Mendicité."}, full: {en: "The act of begging for Discord Nitro, real-world currency, game skins, or personal loans is prohibited.", fr: "L'acte de mendier pour Discord Nitro, de la monnaie réelle, des skins de jeu ou des prêts personnels est interdit."} },
+                { id: 8, n: {en: "Off-Topic", fr: "Hors-Sujet"}, d: {en: "Wrong channel usage.", fr: "Mauvaise utilisation canal."}, e: [{en: "Warning", fr: "Avertissement"}, {en: "Mute", fr: "Mute"}, {en: "Kick", fr: "Kick"}], type: "chat", case: {en: "General in support.", fr: "Général dans support."}, full: {en: "Users must respect the specific purpose of each channel (e.g., no 'general talk' in the Support channels).", fr: "Les utilisateurs doivent respecter l'usage spécifique de chaque canal (ex: pas de 'discussion générale' dans les canaux Support)."} },
+                { id: 9, n: {en: "Schrödinger's Joke", fr: "Blague de Schrödinger"}, d: {en: "Claiming 'it was a joke' after being caught.", fr: "Dire 'c'était une blague' après coup."}, e: [{en: "Mute", fr: "Mute"}, {en: "Kick", fr: "Kick"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "special", case: {en: "Using humor as a defense.", fr: "L'humour comme défense."}, full: {en: "Any claim that a violation was 'just a joke' after being caught will be treated as an admission of guilt.", fr: "Toute affirmation qu'une violation était 'juste une blague' après avoir été pris sera traitée comme un aveu de culpabilité."} }
+            ]},
+            { cat: {en: "Category C: Media & Content Safety", fr: "Catégorie C : Sécurité Médias"}, class: "card-purple", accent: "text-purple-400", rules: [
+                { id: 10, n: {en: "NSFW/NSFL Material", fr: "Matériel NSFW/NSFL"}, d: {en: "Nudity, gore, or sexual imagery.", fr: "Nudité, gore ou imagerie sexuelle."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Posting shock videos.", fr: "Vidéos choc."}, full: {en: "The sharing of nudity, gore, extreme violence, or sexually suggestive imagery is strictly prohibited.", fr: "Le partage de nudité, gore, violence extrême ou imagerie sexuellement suggestive est strictement interdit."} },
+                { id: 11, n: {en: "Malicious Files", fr: "Fichiers Malveillants"}, d: {en: "Crash codes, viruses, or IP loggers.", fr: "Codes crash, virus ou IP loggers."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Linking fake Nitro.", fr: "Faux liens Nitro."}, full: {en: "Sharing links or files that contain 'crash' code, viruses, IP loggers, or suspicious .exe files is a severe security violation.", fr: "Partager des liens ou fichiers contenant du code 'crash', des virus, des IP loggers ou des fichiers .exe suspects est une violation de sécurité grave."} },
+                { id: 12, n: {en: "Illegal Activity", fr: "Activité Illégale"}, d: {en: "Piracy, fraud, or drugs.", fr: "Piraterie, fraude ou drogues."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Sharing torrent links.", fr: "Liens torrent."}, full: {en: "Discussion or promotion of illegal acts, including software piracy, credit card fraud, or sale of controlled substances.", fr: "Discussion ou promotion d'actes illégaux, incluant piratage logiciel, fraude bancaire ou vente de substances contrôlées."} },
+                { id: 13, n: {en: "Seizure Safety", fr: "Sécurité Épilepsie"}, d: {en: "Flashing GIFs or strobes.", fr: "GIFs clignotants ou strobes."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Epilepsy triggers.", fr: "Déclencheurs épilepsie."}, full: {en: "Flashing GIFs, rapid-motion videos, or high-contrast strobe effects are strictly prohibited.", fr: "Les GIFs clignotants, vidéos à mouvement rapide ou effets stroboscopiques à haut contraste sont strictement interdits."} }
+            ]},
+            { cat: {en: "Category D: Voice Channel Etiquette", fr: "Catégorie D : Étiquette Vocal"}, class: "card-brand", accent: "text-yellow-400", rules: [
+                { id: 14, n: {en: "Audio Quality", fr: "Qualité Audio"}, d: {en: "Mic-spam, screaming, or static.", fr: "Mic-spam, cris ou statique."}, e: [{en: "Warning", fr: "Avertissement"}, {en: "Mute", fr: "Mute"}, {en: "Voice Ban", fr: "Ban Vocal"}], type: "voice", case: {en: "Blowing into mic.", fr: "Souffler dans micro."}, full: {en: "Screaming, blowing into the microphone ('ear-rape'), or playing loud background music through the mic is prohibited.", fr: "Crier, souffler dans le microphone ('ear-rape') ou jouer de la musique forte en fond via le micro est interdit."} },
+                { id: 15, n: {en: "Soundboards", fr: "Soundboards"}, d: {en: "Annoying usage or spam.", fr: "Usage agaçant ou spam."}, e: [{en: "Warning", fr: "Avertissement"}, {en: "Mute", fr: "Mute"}, {en: "Voice Ban", fr: "Ban Vocal"}], type: "voice", case: {en: "Spamming effects.", fr: "Spam effets."}, full: {en: "Using soundboards to play loud noises, memes, or disruptive sounds during a conversation is prohibited.", fr: "Utiliser des soundboards pour jouer des bruits forts, des mèmes ou des sons perturbateurs pendant une conversation est interdit."} },
+                { id: 16, n: {en: "Recording Consent", fr: "Consentement Enregistrement"}, d: {en: "Recording VC without permission.", fr: "Enregistrer VC sans permission."}, e: [{en: "Kick", fr: "Kick"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Streaming private talks.", fr: "Streamer discussions privées."}, full: {en: "Recording or live-streaming a voice conversation without explicit verbal consent is a violation of privacy.", fr: "Enregistrer ou diffuser en direct une conversation vocale sans consentement verbal explicite est une violation de la vie privée."} }
+            ]},
+            { cat: {en: "Category E: User Identity", fr: "Catégorie E : Identité Utilisateur"}, class: "card-green", accent: "text-emerald-400", rules: [
+                { id: 17, n: {en: "Profile Decency", fr: "Décence Profil"}, d: {en: "Inappropriate avatars or banners.", fr: "Avatars ou bannières inappropriés."}, e: [{en: "Warning", fr: "Avertissement"}, {en: "Kick", fr: "Kick"}, {en: "Kick", fr: "Kick"}], type: "ident", case: {en: "NSFW profiles.", fr: "Profils NSFW."}, full: {en: "Your Discord identity (Avatar, Banner, About Me) must follow all server rules.", fr: "Votre identité Discord (Avatar, Bannière, À propos) doit suivre toutes les règles du serveur."} },
+                { id: 18, n: {en: "Impersonation", fr: "Usurpation"}, d: {en: "Faking staff or bot identities.", fr: "Faux staff ou bots."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Fake admin.", fr: "Faux admin."}, full: {en: "Posing as a staff member, a developer, or bot is strictly forbidden.", fr: "Se faire passer pour un membre du staff, un développeur ou un bot est strictement interdit."} },
+                { id: 19, n: {en: "Invisible Names", fr: "Noms Invisibles"}, d: {en: "Untypeable or invisible usernames.", fr: "Noms invisibles ou intapables."}, e: [{en: "Warning", fr: "Avertissement"}, {en: "Kick", fr: "Kick"}, {en: "Kick", fr: "Kick"}], type: "ident", case: {en: "Zero-width chars.", fr: "Caractères sans largeur."}, full: {en: "Usernames must contain at least one typeable, standard alphanumeric character.", fr: "Les noms d'utilisateur doivent contenir au moins un caractère alphanumérique standard tapable."} }
+            ]},
+            { cat: {en: "Category F: Commerce & Advertising", fr: "Catégorie F : Commerce & Pub"}, class: "card-slate", accent: "text-green-400", rules: [
+                { id: 20, n: {en: "Unsolicited DM Ads", fr: "Pub MP Non Sollicitée"}, d: {en: "DMing members with ads.", fr: "MP membres avec pubs."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Mass DMing.", fr: "Mass DM."}, full: {en: "Sending unsolicited advertisements via Direct Message to members of this server is an 'Instant Ban' offense.", fr: "Envoyer des publicités non sollicitées par Message Direct aux membres de ce serveur est une infraction 'Ban Instantané'."} },
+                { id: 21, n: {en: "Server Invites", fr: "Invitations Serveur"}, d: {en: "Posting invites without permission.", fr: "Poster invitations sans permission."}, e: [{en: "Warning", fr: "Avertissement"}, {en: "Kick", fr: "Kick"}, {en: "7d Ban", fr: "Ban 7j"}], type: "commerce", case: {en: "Linking servers.", fr: "Liens serveurs."}, full: {en: "Posting invite links to other Discord communities in our public channels is prohibited.", fr: "Poster des liens d'invitation vers d'autres communautés Discord dans nos canaux publics est interdit."} },
+                { id: 22, n: {en: "Account Trading", fr: "Commerce Compte"}, d: {en: "Selling accounts or currency.", fr: "Vente comptes ou monnaie."}, e: [{en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "severe", case: {en: "Selling accounts.", fr: "Vente comptes."}, full: {en: "The buying, selling, or trading of Discord accounts, game accounts, or 'in-game' currency for real-world money is prohibited.", fr: "L'achat, la vente ou l'échange de comptes Discord, de comptes de jeu ou de monnaie 'en jeu' contre de l'argent réel est interdit."} }
+            ]},
+            { cat: {en: "Category G: Administrative Respect", fr: "Catégorie G : Respect Admin"}, class: "card-slate", accent: "text-slate-400", rules: [
+                { id: 23, n: {en: "Mini-Modding", fr: "Mini-Modération"}, d: {en: "Enforcing rules without authority.", fr: "Appliquer règles sans autorité."}, e: [{en: "Verbal Warn", fr: "Avert. Verbal"}, {en: "Timeout", fr: "Timeout"}, {en: "Timeout", fr: "Timeout"}], type: "admin", case: {en: "Threatening bans.", fr: "Menacer de ban."}, full: {en: "Users are strictly forbidden from attempting to enforce rules themselves.", fr: "Il est strictement interdit aux utilisateurs de tenter d'appliquer les règles eux-mêmes."} },
+                { id: 24, n: {en: "Staff Disrespect", fr: "Irrespect Staff"}, d: {en: "Arguing or insulting moderators.", fr: "Argumenter ou insulter modérateurs."}, e: [{en: "Verbal Warn", fr: "Avert. Verbal"}, {en: "Timeout", fr: "Timeout"}, {en: "Perm Ban", fr: "Ban Définitif"}], type: "admin", case: {en: "Insulting mods.", fr: "Insulter mods."}, full: {en: "Arguing with a moderator's decision in a public channel is prohibited.", fr: "Argumenter avec la décision d'un modérateur dans un canal public est interdit."} },
+                { id: 25, n: {en: "Ticket Abuse", fr: "Abus Ticket"}, d: {en: "Trolling in support tickets.", fr: "Troll dans tickets support."}, e: [{en: "Verbal Warn", fr: "Avert. Verbal"}, {en: "Blacklist", fr: "Liste Noire"}, {en: "Blacklist", fr: "Liste Noire"}], type: "admin", case: {en: "Spamming tickets.", fr: "Spam tickets."}, full: {en: "Opening tickets for non-support reasons or trolling staff is prohibited.", fr: "Ouvrir des tickets pour des raisons non liées au support ou troller le staff est interdit."} }
+            ]}
+        ];
+
+        function safeSetText(id, text) { const el = document.getElementById(id); if (el) el.innerText = text; }
+
+        function attemptLogin() {
+            const n = document.getElementById('loginName').value;
+            if(n.length < 2) return alert("Please enter a valid username.");
+            
+            app.user = n;
+            app.rank = document.getElementById('loginRank').value;
+            
+            // Save to Local Storage
+            saveLocalData();
+            
+            initDashboard();
+        }
+
+        function initDashboard() {
+            document.getElementById('userNameDisplay').innerText = app.user;
+            document.getElementById('userRankDisplay').innerText = app.rank;
+            document.getElementById('userInitial').innerText = app.user[0].toUpperCase();
+            document.getElementById('portalView').style.display = 'none';
+            document.getElementById('mainView').classList.remove('hidden');
+            
+            renderNav(); renderStats(); renderChain(); renderOperationalUpdates(); renderMatrix(); renderToolbox(); renderConstitution(); renderActivityFeed(); renderSystemLog();
+            updateUI();
+            setInterval(updateClock, 1000);
+        }
+
+        // Auto-Login if data exists
+        window.addEventListener('DOMContentLoaded', () => {
+            if(loadLocalData()) {
+                initDashboard();
+            }
+        });
+
+        function setLang(l) {
+            currentLang = l;
+            document.getElementById('langEN').className = l === 'en' ? "flex-1 py-2 text-[10px] font-black rounded-lg transition-all bg-brand-600 text-white shadow-lg" : "flex-1 py-2 text-[10px] font-black rounded-lg transition-all text-slate-500 hover:text-white";
+            document.getElementById('langFR').className = l === 'fr' ? "flex-1 py-2 text-[10px] font-black rounded-lg transition-all bg-brand-600 text-white shadow-lg" : "flex-1 py-2 text-[10px] font-black rounded-lg transition-all text-slate-500 hover:text-white";
+            
+            // Re-render all language dependent components
+            renderNav();
+            renderStats();
+            renderChain();
+            renderOperationalUpdates();
+            renderMatrix();
+            renderToolbox();
+            renderConstitution();
+            renderSystemLog();
+            updateIncBuilder(); // Update the calculator text
+            updateUI();
+        }
+
+        function updateUI() {
+            const s = UI_STRINGS[currentLang];
+            
+            safeSetText('recentActTitle', s.recent_act);
+            safeSetText('staffMsgTitle', s.sys_prot);
+            safeSetText('builderTitle', s.builder);
+            safeSetText('calcActionLabel', s.calc_action);
+            safeSetText('opUpdateTitle', s.op_updates);
+            safeSetText('btnGenerate', s.generate);
+            safeSetText('btnCopy', s.copy);
+            safeSetText('langEN', s.lang_en_label);
+            safeSetText('langFR', s.lang_fr_label);
+            
+            const searchInput = document.getElementById('matrixSearch');
+            if(searchInput) searchInput.placeholder = s.ph_search;
+
+            // Update Static Elements with data attributes
+            document.querySelectorAll(`[data-${currentLang}]`).forEach(el => {
+                el.innerText = el.getAttribute(`data-${currentLang}`);
+            });
+        }
+
+        function renderNav() {
+            const s = UI_STRINGS[currentLang];
+            const items = [
+                { id: 'dash', icon: 'M4 6h16M4 12h16m-7 6h7', label: s.dash },
+                { id: 'constitution', icon: 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253', label: s.constitution },
+                { id: 'matrix', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', label: s.matrix },
+                { id: 'chain', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', label: s.chain },
+                { id: 'toolbox', icon: 'M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 011-1h1a2 2 0 100-4H7a1 1 0 01-1-1V7a1 1 0 011-1h3a1 1 0 001-1V4z', label: s.toolbox },
+                { id: 'security', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', label: s.security }
+            ];
+            document.getElementById('navContainer').innerHTML = items.map(i => `
+                <button onclick="nav('${i.id}')" id="btn-${i.id}" class="nav-btn w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-white/5 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="${i.icon}" stroke-width="2" stroke-linecap="round"/></svg>
+                    ${i.label}
+                </button>
+            `).join('');
+        }
+
+        function renderStats() {
+            const s = UI_STRINGS[currentLang];
+            const stats = [
+                { l: s.stat_tickets, v: app.stats.tickets, c: 'card-brand' },
+                { l: s.stat_staff, v: "ACTIVE", c: 'card-blue' },
+                { l: s.stat_actions, v: app.stats.actions, c: 'card-green' }
+            ];
+            document.getElementById('statGrid').innerHTML = stats.map(st => `
+                <div class="theme-card ${st.c}">
+                    <div class="theme-header">${st.l}</div>
+                    <div class="theme-body"><h3 class="text-4xl font-black text-white tracking-tight">${st.v}</h3></div>
+                </div>
+            `).join('');
+        }
+
+        function renderChain() {
+            document.getElementById('chainList').innerHTML = RANKS.map((r) => `
+                <div class="theme-card ${r.class}">
+                    <div class="theme-header">
+                        <div class="w-2 h-2 rounded-full bg-current"></div>
+                        ${r.n[currentLang]}
+                        <span class="ml-auto opacity-50 font-mono text-[9px]">${r.badge[currentLang]}</span>
+                    </div>
+                    <div class="theme-body">
+                        <p class="mb-2 text-white/90 font-medium">${r.d[currentLang]}</p>
+                        <span class="text-[10px] font-bold text-slate-500">${r.c[currentLang]}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderOperationalUpdates() {
+            const updates = currentLang === 'en' ? 
+                [{ t: "Codex Update v18.0", d: "Offline Mode Active. Local Persistence Enabled.", s: "System" },
+                 { t: "Security Patch", d: "AES-256 local storage confirmed active.", s: "Core" }] :
+                [{ t: "Mise à jour Codex v18.0", d: "Mode Hors-ligne Actif. Persistance locale activée.", s: "Système" }];
+            document.getElementById('opUpdateList').innerHTML = updates.map(u => `
+                <div class="p-3 bg-slate-950/30 rounded-lg border border-white/5 mb-2">
+                    <span class="text-[10px] font-black text-white uppercase block mb-1">${u.t}</span>
+                    <p class="text-[11px] text-slate-400">${u.d}</p>
+                </div>
+            `).join('');
+        }
+
+        function renderMatrix() {
+            const searchInput = document.getElementById('matrixSearch');
+            const search = searchInput ? searchInput.value.toLowerCase() : "";
+            
+            let html = "";
+            PENAL_CODE.forEach(sec => {
+                const secName = sec.cat[currentLang];
+                // Filter based on localized name or ID
+                const filtered = sec.rules.filter(r => r.n[currentLang].toLowerCase().includes(search) || r.id.toString() === search);
+                if (filtered.length === 0) return;
+                html += `
+                    <div>
+                        <h4 class="text-xs font-black uppercase tracking-widest mb-4 px-2 text-slate-500">${secName}</h4>
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                            ${filtered.map(r => {
+                                const activeTier = app.selectedViolations.find(v => v.id === r.id)?.tier;
+                                return `
+                                <div class="theme-card ${sec.class}">
+                                    <div class="theme-header justify-between">
+                                        <div class="flex items-center gap-2">
+                                            <button onclick="openRuleModal(${r.id})" class="w-5 h-5 rounded bg-white/10 flex items-center justify-center text-[10px] font-bold text-slate-400 hover:text-white transition-all">?</button>
+                                            <span class="text-sm">${r.n[currentLang]}</span>
+                                        </div>
+                                    </div>
+                                    <div class="theme-body">
+                                        <p class="text-xs text-slate-400 leading-relaxed font-medium mb-4">${r.d[currentLang]}</p>
+                                        <div class="flex gap-2 justify-end">
+                                            ${[1,2,3].map(t => `<button onclick="toggleTier(${r.id}, ${t})" class="btn-tier w-8 h-8 rounded flex items-center justify-center ${activeTier === t ? 'active' : ''}">${t}</button>`).join('')}
+                                        </div>
+                                    </div>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            document.getElementById('matrixList').innerHTML = html;
+        }
+
+        function renderConstitution() {
+            const container = document.getElementById('constitutionContent');
+            if (!container) return;
+            
+            const constitutionStatic = currentLang === 'en' ? 
+                { 
+                    sect1: "Section 1: Jurisdictional Logic", 
+                    art1_t: "Article I. Compound Violation Protocol", 
+                    art1_d: "If multiple rules are violated simultaneously, the punishment defaults to the severity of the worst offense plus one immediate step of escalation.",
+                    art2_t: "Article II. Persistence of Records",
+                    art2_d: "Warnings remain active for a period of six months. Intent is not a mitigating factor; all accounts are strictly liable for content origin."
+                } :
+                { 
+                    sect1: "Section 1 : Logique Juridictionnelle", 
+                    art1_t: "Article I. Protocole de Violation Cumulée", 
+                    art1_d: "Si plusieurs règles sont violées simultanément, la sanction correspond à la gravité de l'infraction la plus grave plus un échelon immédiat d'escalade.",
+                    art2_t: "Article II. Persistance des Dossiers",
+                    art2_d: "Les avertissements restent actifs pour une période de six mois. L'intention n'est pas un facteur atténuant ; tous les comptes sont strictement responsables de l'origine du contenu."
+                };
+
+            let html = `
+                <div class="constitution-section">
+                    <h3 class="text-brand-500 font-black mb-8 uppercase tracking-[0.2em] text-sm">${constitutionStatic.sect1}</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="theme-card card-slate">
+                            <div class="theme-header">${constitutionStatic.art1_t}</div>
+                            <div class="theme-body">
+                                <p class="text-slate-400 text-xs leading-relaxed">${constitutionStatic.art1_d}</p>
+                            </div>
+                        </div>
+                        <div class="theme-card card-slate">
+                            <div class="theme-header">${constitutionStatic.art2_t}</div>
+                            <div class="theme-body">
+                                <p class="text-slate-400 text-xs leading-relaxed">${constitutionStatic.art2_d}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            PENAL_CODE.forEach(sec => {
+                html += `
+                    <div class="constitution-section">
+                        <h3 class="text-white font-black mb-8 uppercase tracking-[0.2em] text-sm">${sec.cat[currentLang]}</h3>
+                        <div class="space-y-6">
+                            ${sec.rules.map(r => `
+                                <div class="theme-card ${sec.class}">
+                                    <div class="theme-header justify-between">
+                                        <span>Article ${r.id}: ${r.n[currentLang]}</span>
+                                    </div>
+                                    <div class="theme-body">
+                                        <p class="text-slate-300 text-xs leading-relaxed mb-6 pl-4 border-l-2 border-white/10">${r.full[currentLang] || r.d[currentLang]}</p>
+                                        <div class="flex flex-wrap gap-2">
+                                            ${r.e.map((tierObj, i) => `
+                                                <span class="text-[9px] font-bold px-3 py-1 rounded bg-slate-950 border border-white/5 text-slate-400 uppercase tracking-wider">
+                                                    Tier ${i+1}: <span class="text-white">${tierObj[currentLang]}</span>
+                                                </span>
+                                            `).join('')}
+                                        </div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+
+        function renderToolbox() { 
+            const container = document.getElementById('templateGrid');
+            if (!container) return;
+
+            let html = "";
+            modToolboxData.forEach(cat => {
+                html += `
+                    <div class="col-span-full mt-4 first:mt-0">
+                        <h4 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 border-b border-white/5 pb-2">${cat.category[currentLang]}</h4>
+                    </div>
+                `;
+                cat.items.forEach(item => {
+                    const templateText = item.template[currentLang];
+                    const actionText = item.action ? item.action[currentLang] : null;
+                    const titleText = item.title[currentLang];
+                    const btnText = UI_STRINGS[currentLang].copy;
+
+                    // Safe escape for the onclick handler
+                    const safeTemplate = templateText
+                        .replace(/\\/g, '\\\\') 
+                        .replace(/'/g, "\\'")    
+                        .replace(/"/g, '&quot;') 
+                        .replace(/\n/g, '\\n'); 
+
+                    html += `
+                    <div class="theme-card card-slate">
+                        <div class="theme-header justify-between">
+                            <span>${titleText}</span>
+                            ${actionText ? `<span class="text-[9px] bg-white/5 px-2 py-0.5 rounded text-brand-500">${actionText}</span>` : ''}
+                        </div>
+                        <div class="theme-body">
+                            <p class="text-xs text-slate-400 italic mb-4 leading-relaxed line-clamp-3">"${templateText}"</p>
+                            <button onclick="copyToClipboard('${safeTemplate}')" class="w-full py-2 bg-slate-900 rounded-lg text-[10px] font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-all border border-slate-800 uppercase">${btnText}</button>
+                        </div>
+                    </div>
+                    `;
+                });
+            });
+            container.innerHTML = html;
+        }
+
+        function openRuleModal(ruleId) {
+            let rule = null;
+            PENAL_CODE.forEach(s => { const found = s.rules.find(r => r.id === ruleId); if(found) rule = found; });
+            const modal = document.getElementById('ruleModal');
+            
+            const protocolLabel = currentLang === 'en' ? "Protocol Definition" : "Définition du Protocole";
+            const refLabel = currentLang === 'en' ? "Reference Case" : "Cas de Référence";
+
+            document.getElementById('modalContent').innerHTML = `
+                <div class="mb-8 relative">
+                    <div class="absolute -left-6 top-0 bottom-0 w-1 bg-brand-500 rounded-full"></div>
+                    <span class="text-[10px] font-black text-brand-500 uppercase tracking-[0.3em]">Article ${rule.id}</span>
+                    <h2 class="text-3xl font-black text-white uppercase mt-2 tracking-tighter italic">${rule.n[currentLang]}</h2>
+                </div>
+                <div class="space-y-8">
+                    <div>
+                        <p class="text-[10px] font-black text-slate-500 uppercase mb-3 tracking-widest">${protocolLabel}</p>
+                        <p class="text-sm text-slate-300 leading-relaxed bg-white/5 p-6 rounded-3xl border border-white/5 shadow-inner">${rule.full[currentLang] || rule.d[currentLang]}</p>
+                    </div>
+                    <div class="p-8 bg-brand-500/10 border border-brand-500/20 rounded-[2rem] relative overflow-hidden">
+                        <p class="text-[10px] font-black text-brand-500 uppercase mb-3 tracking-widest flex items-center gap-2"><span class="w-1.5 h-1.5 bg-brand-500 rounded-full"></span> ${refLabel}</p>
+                        <p class="text-sm text-white italic font-medium leading-relaxed relative z-10">"${rule.case[currentLang] || 'Classified'}"</p>
+                    </div>
+                </div>
+            `;
+            modal.classList.remove('hidden');
+        }
+
+        function closeRuleModal() { document.getElementById('ruleModal').classList.add('hidden'); }
+
+        function toggleTier(ruleId, tier) {
+            const index = app.selectedViolations.findIndex(v => v.id === ruleId);
+            if (index > -1) {
+                if (app.selectedViolations[index].tier === tier) app.selectedViolations.splice(index, 1);
+                else app.selectedViolations[index].tier = tier;
+            } else {
+                let rule = null;
+                PENAL_CODE.forEach(s => { const found = s.rules.find(r => r.id === ruleId); if(found) rule = found; });
+                app.selectedViolations.push({...rule, tier});
+            }
+            updateIncBuilder();
+            renderMatrix();
+        }
+
+        function updateIncBuilder() {
+            let actionText = UI_STRINGS[currentLang].no_action;
+            const builderList = document.getElementById('selectedRulesList');
+            
+            if (app.selectedViolations.length === 0) {
+                const actionEl = document.getElementById('incAction');
+                if (actionEl) { actionEl.innerText = actionText; actionEl.className = "text-2xl font-black text-slate-500 leading-tight mb-4"; }
+                if (builderList) builderList.innerText = "";
+                return;
+            }
+            
+            // LOGIC ENGINE
+            let worstRule = app.selectedViolations[0];
+            const severityMap = { chat: 1, ident: 1, voice: 1, admin: 1, special: 2, commerce: 3, severe: 3 };
+            app.selectedViolations.forEach(v => {
+                if (severityMap[v.type] > severityMap[worstRule.type]) worstRule = v;
+                else if (severityMap[v.type] === severityMap[worstRule.type] && v.tier > worstRule.tier) worstRule = v;
+            });
+
+            // Get the specific enforcement object {en:..., fr:...} based on tier
+            let baseActionObj = worstRule.e[worstRule.tier - 1];
+            
+            // Logic Action (always EN for color checks)
+            let logicAction = baseActionObj.en;
+            // Display Action (localized)
+            let displayAction = baseActionObj[currentLang];
+
+            // Compound Check
+            if (app.selectedViolations.length > 1 && logicAction !== "Perm Ban") {
+                const nextStepIndex = Math.min(worstRule.tier, 2); 
+                const nextStepObj = worstRule.e[nextStepIndex];
+                
+                logicAction = nextStepObj.en; // Escalated Logic
+                displayAction = nextStepObj[currentLang] + (currentLang === 'en' ? " (Compound)" : " (Cumul)"); // Escalated Display
+            }
+
+            // Severe Override
+            if (app.selectedViolations.some(v => v.type === 'severe')) {
+                displayAction = currentLang === 'en' ? "Perm Ban" : "Ban Définitif";
+                logicAction = "Perm Ban";
+            }
+
+            const actionEl = document.getElementById('incAction');
+            actionEl.innerText = displayAction;
+            
+            if(logicAction.includes("Ban")) actionEl.className = "text-2xl font-black text-red-500 leading-tight mb-4 drop-shadow-md";
+            else if(logicAction.includes("Kick") || logicAction.includes("Timeout")) actionEl.className = "text-2xl font-black text-orange-500 leading-tight mb-4 drop-shadow-md";
+            else actionEl.className = "text-2xl font-black text-yellow-400 leading-tight mb-4 drop-shadow-md";
+
+            builderList.innerHTML = app.selectedViolations.map(v => `
+                <div class="flex justify-between items-center p-2 bg-slate-950 rounded border border-slate-800"><span class="text-white text-xs truncate pr-2">• ${v.n[currentLang]}</span><span class="font-mono text-[10px] text-brand-500 font-bold">T${v.tier}</span></div>
+            `).join('');
+        }
+
+        function resetIncBuilder() {
+            app.selectedViolations = [];
+            const userIn = document.getElementById('incUsername'); 
+            const idIn = document.getElementById('incDiscordId');
+            const descIn = document.getElementById('incDesc');
+            if(userIn) userIn.value = ""; 
+            if(idIn) idIn.value = "";
+            if(descIn) descIn.value = "";
+            updateIncBuilder(); renderMatrix();
+        }
+
+        function generateLog() {
+            const uname = document.getElementById('incUsername').value || "ANONYMOUS";
+            const uid = document.getElementById('incDiscordId').value || "N/A";
+            const act = document.getElementById('incAction').innerText;
+            
+            if (app.selectedViolations.length === 0) return showMessage(currentLang === 'en' ? "Select violations first!" : "Sélectionnez d'abord des violations !");
+            
+            const logHeader = currentLang === 'en' ? "**[WILDFIRE PENAL EXPORT]**" : "**[EXPORT PÉNAL WILDFIRE]**";
+            const lblStaff = currentLang === 'en' ? "Staff" : "Staff";
+            const lblTarget = currentLang === 'en' ? "Target" : "Cible";
+            const lblAction = currentLang === 'en' ? "Action" : "Action";
+            const lblViolations = currentLang === 'en' ? "Violations" : "Violations";
+            const lblContext = currentLang === 'en' ? "Context" : "Contexte";
+            const lblTime = currentLang === 'en' ? "Timestamp" : "Horodatage";
+
+            const log = `${logHeader}\n${lblStaff}: ${app.user}\n${lblTarget}: ${uname} (ID: ${uid})\n${lblAction}: ${act}\n\n${lblViolations}:\n${app.selectedViolations.map(i=>`• Art. ${i.id} (T${i.tier}): ${i.n[currentLang]}`).join('\n')}\n\n${lblContext}: ${document.getElementById('incDesc').value}\n${lblTime}: ${new Date().toUTCString()}`;
+            
+            document.getElementById('logOutput').value = log;
+            document.getElementById('logModal').classList.remove('hidden');
+            app.stats.actions++;
+            app.history.push(`${act} → ${uname}`);
+            saveLocalData();
+            renderStats(); renderActivityFeed();
+        }
+
+        function renderSystemLog() {
+            const usage = (JSON.stringify(localStorage).length / 1024).toFixed(2);
+            const logs = currentLang === 'en' ? [`Storage: ${usage}KB Used`, "Mode: Offline PWA", "Assets: Local"] : [`Stockage: ${usage}KB Utilisé`, "Mode: Hors-ligne", "Actifs: Locaux"];
+            const el = document.getElementById('systemLog');
+            if (el) el.innerHTML = logs.map(l => `<p class="flex items-center gap-3"><span class="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_10px_#22c55e]"></span> ${l}</p>`).join('');
+        }
+
+        function renderActivityFeed() {
+            const feed = document.getElementById('activityFeed');
+            if(!feed) return;
+            if (app.history.length === 0) { 
+                feed.innerHTML = `<p class="text-[10px] text-slate-600 italic text-center py-4">${currentLang === 'en' ? "No recent records found in local storage." : "Aucun enregistrement récent trouvé en local."}</p>`; 
+                return; 
+            }
+            feed.innerHTML = app.history.slice().reverse().map(h => `<div class="text-[10px] p-3 bg-slate-950/50 rounded-lg border border-white/5 flex justify-between items-center"><span class="text-slate-300 font-bold truncate pr-4">${h}</span><span class="text-brand-500 font-mono text-[8px] font-black uppercase shrink-0 tracking-widest">SAVED</span></div>`).join('');
+        }
+
+        function nav(id) {
+            document.querySelectorAll('[id^="view-"]').forEach(e => e.classList.add('hidden'));
+            document.getElementById('view-'+id).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active', 'text-white'));
+            const btn = document.getElementById('btn-'+id);
+            if(btn) btn.classList.add('active', 'text-white');
+            document.getElementById('pageTitle').innerText = UI_STRINGS[currentLang][id];
+        }
+        
+        function updateClock() {
+            const now = new Date();
+            const utc = document.getElementById('clockUTC');
+            const mrs = document.getElementById('clockMRS');
+            
+            if(utc) utc.innerText = now.toLocaleTimeString('en-GB', {timeZone:'UTC'});
+            if(mrs) mrs.innerText = now.toLocaleTimeString('fr-FR', {timeZone:'Europe/Paris'});
+        }
+
+        function copyToClipboard(text) {
+            const temp = document.createElement("textarea"); temp.value = text; document.body.appendChild(temp); temp.select(); document.execCommand("copy"); document.body.removeChild(temp);
+            alert(currentLang === 'en' ? "Copied!" : "Copié !");
+        }
+
+        function logout() { location.reload(); }
+        function showMessage(msg) { alert(msg); }
+    </script>
+</body>
+</html>
